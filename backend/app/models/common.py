@@ -27,3 +27,29 @@ class CursorPagination(BaseModel):
     next_cursor: str | None = None
     has_more: bool
     limit: int
+
+
+class TransactionType(str, Enum):
+    DEPOSIT = "DEPOSIT"
+    WITHDRAWAL = "WITHDRAWAL"
+    TRANSFER = "TRANSFER"
+    PAYMENT = "PAYMENT"
+
+
+class TransactionStatus(str, Enum):
+    CREATED = "CREATED"
+    SUCCESSFUL = "SUCCESSFUL"
+    DECLINED = "DECLINED"
+    SUSPENDED = "SUSPENDED"
+    REFUNDED = "REFUNDED"
+
+
+class Geolocation(BaseModel):
+    country: str | None = None
+    state: str | None = None
+
+
+class DeviceData(BaseModel):
+    device_id: str | None = None
+    ip_address: str | None = None
+    geolocation: Geolocation | None = None
