@@ -23,7 +23,7 @@ class PaymentMethod(BaseModel):
     type: PaymentMethodType
 
 
-class Pagination(BaseModel):
-    total: int
-    page: int
-    per_page: int
+class CursorPagination(BaseModel):
+    next_cursor: str | None = None
+    has_more: bool
+    limit: int

@@ -19,3 +19,26 @@ async def close_driver() -> None:
     if _driver is not None:
         await _driver.close()
         _driver = None
+
+
+async def execute_query(query: str, parameters: dict | None = None) -> list[dict]:
+    driver = await get_driver()
+    result = await driver.execute_query(
+        query,
+        parameters_=parameters or {},
+        database_="neo4j",
+    )
+    return [record.data() for record in result.records]
+
+
+async def execute_write(query: str, parameters: dict | None = None) -> None:
+    return await execute_query(query, parameters)
+
+
+async def init_constraints() -> None:
+    for stmt in [
+        "CREATE CONSTRAINT user_id IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE",
+        "CREATE INDEX user_email IF NOT EXISTS FOR (u:User) ON (u.email)",
+        "CREATE INDEX user_phone IF NOT EXISTS FOR (u:User) ON (u.phone)",
+    ]:
+        await execute_write(stmt)

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr
 
-from app.models.common import Address, Pagination, PaymentMethod
+from app.models.common import Address, CursorPagination, PaymentMethod
 
 
 class UserBase(BaseModel):
@@ -35,4 +35,4 @@ class UserResponse(UserBase):
 
 class UserListResponse(BaseModel):
     users: list[UserResponse]
-    pagination: Pagination
+    pagination: CursorPagination
