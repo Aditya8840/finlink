@@ -8,6 +8,7 @@ dependencies = [
     "python-dotenv",
     "pydantic-settings",
     "neo4j>=6.1.0",
+    "email-validator>=2.3.0",
 ]
 
 [project.optional-dependencies]
