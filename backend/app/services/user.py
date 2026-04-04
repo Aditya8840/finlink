@@ -106,7 +106,21 @@ async def create_user(data: UserCreate) -> UserResponse:
     return await get_user(user_id)
 
 
+async def is_user_exists(user_id: str) -> bool:
+    result = await execute_query(
+        """
+        MATCH (u:User {id: $id})
+        RETURN u
+        """,
+        {"id": user_id},
+    )
+    return len(result) > 0
+
+
 async def update_user(user_id: str, data: UserUpdate) -> UserResponse | None:
+    if not await is_user_exists(user_id):
+        return None
+
     updates = data.model_dump(exclude_none=True)
     if not updates:
         return await get_user(user_id)
@@ -128,7 +142,7 @@ async def update_user(user_id: str, data: UserUpdate) -> UserResponse | None:
 
     if data.address is not None:
         await execute_write(
-            "MATCH (u:User {id: $id})-[r:HAS_ADDRESS]->(a:Address)DELETE r, a",
+            "MATCH (u:User {id: $id})-[r:HAS_ADDRESS]->(a:Address) DELETE r, a",
             {"id": user_id},
         )
         await _create_related_entities(user_id, data)
