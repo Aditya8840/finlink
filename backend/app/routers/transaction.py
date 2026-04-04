@@ -20,7 +20,10 @@ router = APIRouter(
 async def create_transaction(
     transaction: TransactionCreate, background_tasks: BackgroundTasks
 ):
-    result = await transaction_service.create_transaction(transaction)
+    try:
+        result = await transaction_service.create_transaction(transaction)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     background_tasks.add_task(
         transaction_service.detect_shared_relationships, result.id
     )
