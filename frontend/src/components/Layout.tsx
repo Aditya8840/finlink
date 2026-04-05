@@ -29,9 +29,7 @@ function SidebarLink({ to, label }: { to: string; label: string }) {
       to={to}
       className={({ isActive }) =>
         `block px-3 py-2 rounded text-sm transition-colors ${
-          isActive
-            ? 'bg-indigo-600 text-white'
-            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+          isActive ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
         }`
       }
     >
