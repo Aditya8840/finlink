@@ -32,6 +32,10 @@ export interface Transaction {
   payment_method: PaymentMethod | null
   created_at: string
   updated_at: string
+  sender_name: string | null
+  sender_email: string | null
+  receiver_name: string | null
+  receiver_email: string | null
 }
 
 export interface TransactionListResponse {
@@ -43,12 +47,26 @@ export interface TransactionListResponse {
   }
 }
 
+export interface TransactionFilters {
+  search?: string
+  transaction_type?: string
+  status?: string
+  min_amount?: number
+  max_amount?: number
+}
+
 export async function fetchTransactions(
   cursor?: string,
   limit = 20,
+  filters?: TransactionFilters,
 ): Promise<TransactionListResponse> {
   const params: Record<string, string | number> = { limit }
   if (cursor) params.cursor = cursor
+  if (filters?.search) params.search = filters.search
+  if (filters?.transaction_type) params.transaction_type = filters.transaction_type
+  if (filters?.status) params.status = filters.status
+  if (filters?.min_amount !== undefined) params.min_amount = filters.min_amount
+  if (filters?.max_amount !== undefined) params.max_amount = filters.max_amount
   const { data } = await api.get('/transactions/', { params })
   return data
 }

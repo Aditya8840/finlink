@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { fetchUsers } from '@/api/users'
 import UserFormDialog from '@/components/UserFormDialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -23,11 +24,22 @@ export default function UsersPage() {
   const [cursorStack, setCursorStack] = useState<string[]>([])
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const navigate = useNavigate()
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleSearch = (value: string) => {
+    setSearch(value)
+    setCursorStack([])
+    setCurrentCursor(undefined)
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+    searchTimerRef.current = setTimeout(() => setDebouncedSearch(value), 300)
+  }
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['users', currentCursor],
-    queryFn: () => fetchUsers(currentCursor, PAGE_SIZE),
+    queryKey: ['users', currentCursor, debouncedSearch],
+    queryFn: () => fetchUsers(currentCursor, PAGE_SIZE, debouncedSearch || undefined),
   })
 
   const goNext = () => {
@@ -58,6 +70,17 @@ export default function UsersPage() {
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-1 h-4 w-4" /> Add User
         </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name or email..."
+          value={search}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       <UserFormDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />

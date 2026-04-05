@@ -67,6 +67,8 @@ def _format_transaction(record: dict) -> TransactionResponse:
     device_info = record["d"]
     geolocation = record["g"]
     payment_method = record["pm"]
+    sender = record.get("sender")
+    receiver = record.get("receiver")
 
     return TransactionResponse(
         **transaction,
@@ -78,6 +80,12 @@ def _format_transaction(record: dict) -> TransactionResponse:
         if device_info
         else None,
         payment_method=PaymentMethod(**payment_method) if payment_method else None,
+        sender_name=f"{sender['first_name']} {sender['last_name']}" if sender else None,
+        sender_email=sender["email"] if sender else None,
+        receiver_name=f"{receiver['first_name']} {receiver['last_name']}"
+        if receiver
+        else None,
+        receiver_email=receiver["email"] if receiver else None,
     )
 
 
@@ -88,7 +96,11 @@ async def get_transaction(tx_id: str) -> TransactionResponse | None:
         OPTIONAL MATCH (t)-[:FROM_DEVICE]->(d:DeviceInfo)
         OPTIONAL MATCH (d)-[:LOCATED_AT]->(g:Geolocation)
         OPTIONAL MATCH (t)-[:USED_PAYMENT_METHOD]->(pm:PaymentMethod)
-        RETURN t, d, g, pm
+        OPTIONAL MATCH (sender:User)-[:SENT]->(t)
+        OPTIONAL MATCH (t)-[:RECEIVED_BY]->(receiver:User)
+        RETURN t, d, g, pm,
+               sender { .id, .first_name, .last_name, .email } AS sender,
+               receiver { .id, .first_name, .last_name, .email } AS receiver
         """,
         {"id": tx_id},
     )
@@ -216,31 +228,67 @@ async def update_transaction(
 
 
 async def list_transactions(
-    cursor: str | None = None, limit: int = 10
+    cursor: str | None = None,
+    limit: int = 10,
+    search: str | None = None,
+    transaction_type: str | None = None,
+    transaction_status: str | None = None,
+    min_amount: float | None = None,
+    max_amount: float | None = None,
 ) -> TransactionListResponse:
     params: dict = {"limit": limit + 1}
+    where_parts: list[str] = []
+
     if cursor:
         params["cursor"] = cursor
-        query = """
+        where_parts.append("t.created_at < $cursor")
+
+    search_clause = ""
+    if search:
+        params["search"] = f"(?i).*{search}.*"
+        search_clause = """
+            WITH t
+            MATCH (s:User)-[:SENT]->(t)
+            MATCH (t)-[:RECEIVED_BY]->(r:User)
+            WHERE s.first_name =~ $search OR s.last_name =~ $search
+               OR s.email =~ $search
+               OR r.first_name =~ $search OR r.last_name =~ $search
+               OR r.email =~ $search
+        """
+
+    if transaction_type:
+        params["txType"] = transaction_type
+        where_parts.append("t.transaction_type = $txType")
+
+    if transaction_status:
+        params["txStatus"] = transaction_status
+        where_parts.append("t.status = $txStatus")
+
+    if min_amount is not None:
+        params["minAmount"] = min_amount
+        where_parts.append("t.amount >= $minAmount")
+
+    if max_amount is not None:
+        params["maxAmount"] = max_amount
+        where_parts.append("t.amount <= $maxAmount")
+
+    where_clause = "WHERE " + " AND ".join(where_parts) if where_parts else ""
+
+    query = f"""
         MATCH (t:Transaction)
-        WHERE t.created_at < $cursor
+        {where_clause}
+        {search_clause}
         WITH t ORDER BY t.created_at DESC
         LIMIT $limit
         OPTIONAL MATCH (t)-[:FROM_DEVICE]->(d:DeviceInfo)
         OPTIONAL MATCH (d)-[:LOCATED_AT]->(g:Geolocation)
         OPTIONAL MATCH (t)-[:USED_PAYMENT_METHOD]->(pm:PaymentMethod)
-        RETURN t, d, g, pm
-        """
-    else:
-        query = """
-        MATCH (t:Transaction)
-        WITH t ORDER BY t.created_at DESC
-        LIMIT $limit
-        OPTIONAL MATCH (t)-[:FROM_DEVICE]->(d:DeviceInfo)
-        OPTIONAL MATCH (d)-[:LOCATED_AT]->(g:Geolocation)
-        OPTIONAL MATCH (t)-[:USED_PAYMENT_METHOD]->(pm:PaymentMethod)
-        RETURN t, d, g, pm
-        """
+        OPTIONAL MATCH (sender:User)-[:SENT]->(t)
+        OPTIONAL MATCH (t)-[:RECEIVED_BY]->(receiver:User)
+        RETURN t, d, g, pm,
+               sender {{ .id, .first_name, .last_name, .email }} AS sender,
+               receiver {{ .id, .first_name, .last_name, .email }} AS receiver
+    """
     result = await execute_query(query, params)
     has_more = len(result) > limit
     transactions = [_format_transaction(record) for record in result[:limit]]

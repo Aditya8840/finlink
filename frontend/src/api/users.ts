@@ -27,9 +27,14 @@ export interface UserListResponse {
   }
 }
 
-export async function fetchUsers(cursor?: string, limit = 20): Promise<UserListResponse> {
+export async function fetchUsers(
+  cursor?: string,
+  limit = 20,
+  search?: string,
+): Promise<UserListResponse> {
   const params: Record<string, string | number> = { limit }
   if (cursor) params.cursor = cursor
+  if (search) params.search = search
   const { data } = await api.get('/users/', { params })
   return data
 }

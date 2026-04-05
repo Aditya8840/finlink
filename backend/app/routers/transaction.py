@@ -32,9 +32,23 @@ async def create_transaction(
 
 @router.get("/", response_model=TransactionListResponse, status_code=status.HTTP_200_OK)
 async def list_transactions(
-    cursor: str | None = None, limit: int = Query(30, ge=1, le=100)
+    cursor: str | None = None,
+    limit: int = Query(30, ge=1, le=100),
+    search: str | None = None,
+    transaction_type: str | None = None,
+    transaction_status: str | None = Query(None, alias="status"),
+    min_amount: float | None = None,
+    max_amount: float | None = None,
 ):
-    return await transaction_service.list_transactions(cursor, limit)
+    return await transaction_service.list_transactions(
+        cursor,
+        limit,
+        search=search,
+        transaction_type=transaction_type,
+        transaction_status=transaction_status,
+        min_amount=min_amount,
+        max_amount=max_amount,
+    )
 
 
 @router.get(
