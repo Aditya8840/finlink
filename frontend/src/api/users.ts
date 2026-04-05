@@ -31,10 +31,12 @@ export async function fetchUsers(
   cursor?: string,
   limit = 20,
   search?: string,
+  flagged?: boolean,
 ): Promise<UserListResponse> {
-  const params: Record<string, string | number> = { limit }
+  const params: Record<string, string | number | boolean> = { limit }
   if (cursor) params.cursor = cursor
   if (search) params.search = search
+  if (flagged) params.flagged = true
   const { data } = await api.get('/users/', { params })
   return data
 }

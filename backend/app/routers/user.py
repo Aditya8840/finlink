@@ -21,8 +21,9 @@ async def list_users(
     cursor: str | None = None,
     limit: int = Query(30, ge=1, le=100),
     search: str | None = None,
+    flagged: bool = False,
 ):
-    return await user_service.list_users(cursor, limit, search=search)
+    return await user_service.list_users(cursor, limit, search=search, flagged=flagged)
 
 
 @router.get("/{user_id}", response_model=UserResponse, status_code=status.HTTP_200_OK)

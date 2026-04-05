@@ -176,6 +176,7 @@ async def list_users(
     cursor: str | None = None,
     limit: int = 10,
     search: str | None = None,
+    flagged: bool = False,
 ) -> UserListResponse:
     params: dict = {"limit": limit + 1}
     where_parts = []
@@ -192,9 +193,19 @@ async def list_users(
 
     where_clause = "WHERE " + " AND ".join(where_parts) if where_parts else ""
 
+    flagged_clause = ""
+    if flagged:
+        flagged_clause = """
+            WITH u
+            WHERE EXISTS {
+                (u)-[:SHARED_EMAIL|SHARED_PHONE|SHARED_ADDRESS|SHARED_PAYMENT_METHOD]-()
+            }
+        """
+
     query = f"""
         MATCH (u:User)
         {where_clause}
+        {flagged_clause}
         WITH u ORDER BY u.created_at DESC
         LIMIT $limit
         OPTIONAL MATCH (u)-[:HAS_ADDRESS]->(a:Address)
