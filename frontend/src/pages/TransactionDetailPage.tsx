@@ -15,6 +15,8 @@ import {
 import { fetchTransaction } from '@/api/transactions'
 import type { TransactionType, TransactionStatus } from '@/api/transactions'
 import { fetchUser } from '@/api/users'
+import { fetchTransactionConnections } from '@/api/relationships'
+import TransactionGraph from '@/components/TransactionGraph'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -77,6 +79,12 @@ export default function TransactionDetailPage() {
     queryKey: ['user', transaction?.receiver_id],
     queryFn: () => fetchUser(transaction!.receiver_id),
     enabled: !!transaction?.receiver_id,
+  })
+
+  const { data: connections } = useQuery({
+    queryKey: ['transaction-connections', id],
+    queryFn: () => fetchTransactionConnections(id!),
+    enabled: !!id,
   })
 
   if (txLoading) {
@@ -235,6 +243,8 @@ export default function TransactionDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {connections && <TransactionGraph transaction={transaction} connections={connections} />}
 
       {(transaction.device_info || transaction.payment_method) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

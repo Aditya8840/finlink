@@ -38,6 +38,8 @@ export interface UserConnections {
 export interface LinkedTransaction {
   link_type: string
   transaction: TransactionSummary
+  sender: RelatedUser | null
+  receiver: RelatedUser | null
 }
 
 export interface TransactionConnections {
