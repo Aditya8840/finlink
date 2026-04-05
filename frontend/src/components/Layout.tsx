@@ -1,39 +1,72 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { Users, ArrowLeftRight } from 'lucide-react'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
+import { Separator } from '@/components/ui/separator'
+
+const navItems = [
+  { to: '/users', label: 'Users', icon: Users },
+  { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
+]
 
 export default function Layout() {
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-56 bg-gray-900 text-white flex flex-col shrink-0">
-        <div className="px-4 py-5 border-b border-gray-700">
-          <h1 className="text-lg font-bold tracking-tight">FinLink</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Finance Link Analyzer</p>
-        </div>
-        <nav className="flex-1 px-2 py-3 space-y-1">
-          <SidebarLink to="/users" label="Users" />
-          <SidebarLink to="/transactions" label="Transactions" />
-        </nav>
-      </aside>
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader className="px-4 py-4">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight">FinLink</h1>
+            <p className="text-xs text-muted-foreground">Finance Link Analyzer</p>
+          </div>
+        </SidebarHeader>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto p-6">
-        <Outlet />
-      </main>
-    </div>
-  )
-}
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navItems.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.to}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-function SidebarLink({ to, label }: { to: string; label: string }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        `block px-3 py-2 rounded text-sm transition-colors ${
-          isActive ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-        }`
-      }
-    >
-      {label}
-    </NavLink>
+        <SidebarRail />
+      </Sidebar>
+
+      <SidebarInset>
+        <header className="flex h-12 items-center gap-2 border-b px-4">
+          <SidebarTrigger />
+          <Separator orientation="vertical" className="h-4" />
+          <span className="text-sm text-muted-foreground">Dashboard</span>
+        </header>
+
+        <main className="flex-1 overflow-auto p-6">
+          <Outlet />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
