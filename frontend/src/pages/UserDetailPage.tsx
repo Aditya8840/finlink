@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -9,11 +10,13 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Link2,
+  Pencil,
 } from 'lucide-react'
 import { fetchUser } from '@/api/users'
 import { fetchUserConnections } from '@/api/relationships'
 import type { TransactionLink, SharedLink } from '@/api/relationships'
 import RelationshipGraph from '@/components/RelationshipGraph'
+import UserFormDialog from '@/components/UserFormDialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -30,6 +33,7 @@ import {
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['user', id],
@@ -68,17 +72,24 @@ export default function UserDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/users')}>
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {user.first_name} {user.last_name}
-          </h1>
-          <p className="text-xs text-muted-foreground font-mono">{user.id}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/users')}>
+            <ArrowLeft className="mr-1 h-4 w-4" /> Back
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {user.first_name} {user.last_name}
+            </h1>
+            <p className="text-xs text-muted-foreground font-mono">{user.id}</p>
+          </div>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+          <Pencil className="mr-1 h-4 w-4" /> Edit
+        </Button>
       </div>
+
+      <UserFormDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} user={user} />
 
       <Card>
         <CardHeader>

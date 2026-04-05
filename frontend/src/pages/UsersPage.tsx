@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import { fetchUsers } from '@/api/users'
+import UserFormDialog from '@/components/UserFormDialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +22,7 @@ const PAGE_SIZE = 10
 export default function UsersPage() {
   const [cursorStack, setCursorStack] = useState<string[]>([])
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const navigate = useNavigate()
 
   const { data, isLoading, isError } = useQuery({
@@ -45,12 +48,19 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Users</h1>
-        <p className="text-sm text-muted-foreground">
-          Click on a user to view their relationships and connections
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Users</h1>
+          <p className="text-sm text-muted-foreground">
+            Click on a user to view their relationships and connections
+          </p>
+        </div>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="mr-1 h-4 w-4" /> Add User
+        </Button>
       </div>
+
+      <UserFormDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
 
       {isError && (
         <Card className="border-destructive">
