@@ -157,6 +157,17 @@ async def update_user(user_id: str, data: UserUpdate) -> UserResponse | None:
         )
         await _create_related_entities(user_id, data)
 
+    await execute_write(
+        """
+        MATCH (u:User {id: $id})-[r:SHARED_EMAIL
+            |SHARED_PHONE
+            |SHARED_ADDRESS
+            |SHARED_PAYMENT_METHOD]-()
+        DELETE r
+        """,
+        {"id": user_id},
+    )
+
     return await get_user(user_id)
 
 
