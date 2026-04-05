@@ -44,6 +44,10 @@ class TransactionResponse(TransactionBase):
     id: str
     created_at: datetime
     updated_at: datetime
+    sender_name: str | None = None
+    sender_email: str | None = None
+    receiver_name: str | None = None
+    receiver_email: str | None = None
 
 
 class TransactionListResponse(BaseModel):

@@ -172,28 +172,35 @@ async def update_user(user_id: str, data: UserUpdate) -> UserResponse | None:
     return await get_user(user_id)
 
 
-async def list_users(cursor: str | None = None, limit: int = 10) -> UserListResponse:
+async def list_users(
+    cursor: str | None = None,
+    limit: int = 10,
+    search: str | None = None,
+) -> UserListResponse:
     params: dict = {"limit": limit + 1}
+    where_parts = []
+
     if cursor:
         params["cursor"] = cursor
-        query = """
-            MATCH (u:User)
-            WHERE u.created_at < $cursor
-            WITH u ORDER BY u.created_at DESC
-            LIMIT $limit
-            OPTIONAL MATCH (u)-[:HAS_ADDRESS]->(a:Address)
-            OPTIONAL MATCH (u)-[:HAS_PAYMENT_METHOD]->(p:PaymentMethod)
-            RETURN u, a, collect(DISTINCT p { .id, .type }) AS payment_methods
-        """
-    else:
-        query = """
-            MATCH (u:User)
-            WITH u ORDER BY u.created_at DESC
-            LIMIT $limit
-            OPTIONAL MATCH (u)-[:HAS_ADDRESS]->(a:Address)
-            OPTIONAL MATCH (u)-[:HAS_PAYMENT_METHOD]->(p:PaymentMethod)
-            RETURN u, a, collect(DISTINCT p { .id, .type }) AS payment_methods
-        """
+        where_parts.append("u.created_at < $cursor")
+
+    if search:
+        params["search"] = f"(?i).*{search}.*"
+        where_parts.append(
+            "(u.first_name =~ $search OR u.last_name =~ $search OR u.email =~ $search)"
+        )
+
+    where_clause = "WHERE " + " AND ".join(where_parts) if where_parts else ""
+
+    query = f"""
+        MATCH (u:User)
+        {where_clause}
+        WITH u ORDER BY u.created_at DESC
+        LIMIT $limit
+        OPTIONAL MATCH (u)-[:HAS_ADDRESS]->(a:Address)
+        OPTIONAL MATCH (u)-[:HAS_PAYMENT_METHOD]->(p:PaymentMethod)
+        RETURN u, a, collect(DISTINCT p {{ .id, .type }}) AS payment_methods
+    """
     result = await execute_query(query, params)
 
     has_more = len(result) > limit

@@ -17,8 +17,12 @@ async def create_user(user: UserCreate, background_tasks: BackgroundTasks):
 
 
 @router.get("/", response_model=UserListResponse, status_code=status.HTTP_200_OK)
-async def list_users(cursor: str | None = None, limit: int = Query(30, ge=1, le=100)):
-    return await user_service.list_users(cursor, limit)
+async def list_users(
+    cursor: str | None = None,
+    limit: int = Query(30, ge=1, le=100),
+    search: str | None = None,
+):
+    return await user_service.list_users(cursor, limit, search=search)
 
 
 @router.get("/{user_id}", response_model=UserResponse, status_code=status.HTTP_200_OK)
