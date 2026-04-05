@@ -127,7 +127,22 @@ async def get_transaction_connections(tx_id: str) -> TransactionConnections:
             -[r:SHARED_IP|SHARED_DEVICE
                 |SHARED_PAYMENT]
             -(t2:Transaction)
-        RETURN type(r) AS link_type, t2 AS transaction
+        OPTIONAL MATCH (s2:User)-[:SENT]
+            ->(t2)-[:RECEIVED_BY]->(r2:User)
+        RETURN type(r) AS link_type,
+               t2 AS transaction,
+               s2 {
+                .id,
+                .first_name,
+                .last_name,
+                .email
+            } AS tx_sender,
+               r2 {
+                .id,
+                .first_name,
+                .last_name,
+                .email
+            } AS tx_receiver
         """,
         {"txId": tx_id},
     )
@@ -139,6 +154,10 @@ async def get_transaction_connections(tx_id: str) -> TransactionConnections:
             LinkedTransaction(
                 link_type=r["link_type"],
                 transaction=_to_transaction_summary(r["transaction"]),
+                sender=_to_related_user(r["tx_sender"]) if r.get("tx_sender") else None,
+                receiver=_to_related_user(r["tx_receiver"])
+                if r.get("tx_receiver")
+                else None,
             )
             for r in linked_records
         ],
