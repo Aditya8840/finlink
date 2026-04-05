@@ -47,3 +47,21 @@ class TransactionConnections(BaseModel):
     sender: RelatedUser
     receiver: RelatedUser
     linked_transactions: list[LinkedTransaction]
+
+
+class PathNode(BaseModel):
+    id: str
+    label: str
+    properties: dict
+
+
+class PathEdge(BaseModel):
+    source: str
+    target: str
+    type: str
+
+
+class ShortestPathResponse(BaseModel):
+    path: list[PathNode]
+    edges: list[PathEdge]
+    length: int

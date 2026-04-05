@@ -16,6 +16,7 @@ import { fetchUser } from '@/api/users'
 import { fetchUserConnections } from '@/api/relationships'
 import type { TransactionLink, SharedLink } from '@/api/relationships'
 import RelationshipGraph from '@/components/RelationshipGraph'
+import ShortestPathFinder from '@/components/ShortestPathFinder'
 import UserFormDialog from '@/components/UserFormDialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -141,6 +142,8 @@ export default function UserDetailPage() {
           connections={connections}
         />
       )}
+
+      <ShortestPathFinder currentUserId={user.id} />
 
       {connectionsLoading ? (
         <Skeleton className="h-48 w-full" />

@@ -57,3 +57,31 @@ export async function fetchTransactionConnections(txId: string): Promise<Transac
   const { data } = await api.get(`/relationships/transaction/${txId}`)
   return data
 }
+
+export interface PathNode {
+  id: string
+  label: string
+  properties: Record<string, unknown>
+}
+
+export interface PathEdge {
+  source: string
+  target: string
+  type: string
+}
+
+export interface ShortestPathResponse {
+  path: PathNode[]
+  edges: PathEdge[]
+  length: number
+}
+
+export async function fetchShortestPath(
+  sourceId: string,
+  targetId: string,
+): Promise<ShortestPathResponse> {
+  const { data } = await api.get('/relationships/shortest-path', {
+    params: { source: sourceId, target: targetId },
+  })
+  return data
+}
