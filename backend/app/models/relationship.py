@@ -33,6 +33,8 @@ class SharedLink(BaseModel):
 class LinkedTransaction(BaseModel):
     link_type: str
     transaction: TransactionSummary
+    sender: RelatedUser | None = None
+    receiver: RelatedUser | None = None
 
 
 class UserConnections(BaseModel):
