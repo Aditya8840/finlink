@@ -1,8 +1,11 @@
 from app.db import execute_query
 from app.models.relationship import (
     LinkedTransaction,
+    PathEdge,
+    PathNode,
     RelatedUser,
     SharedLink,
+    ShortestPathResponse,
     TransactionConnections,
     TransactionLink,
     TransactionSummary,
@@ -162,3 +165,59 @@ async def get_transaction_connections(tx_id: str) -> TransactionConnections:
             for r in linked_records
         ],
     )
+
+
+async def find_shortest_path(
+    source_id: str,
+    target_id: str,
+    max_depth: int = 10,
+) -> ShortestPathResponse:
+    node_records = await execute_query(
+        f"""
+        MATCH (a:User {{id: $src}}), (b:User {{id: $tgt}})
+        MATCH p = shortestPath((a)-[*..{max_depth}]-(b))
+        RETURN nodes(p) AS path_nodes
+        """,
+        {"src": source_id, "tgt": target_id},
+    )
+
+    if not node_records:
+        raise ValueError(f"No path found between {source_id} and {target_id}")
+
+    path = []
+    for node in node_records[0]["path_nodes"]:
+        node_id = node.get("id", "")
+        if "first_name" in node:
+            label = f"{node['first_name']} {node['last_name']}"
+            node_type = "User"
+        elif "transaction_type" in node:
+            label = f"${node.get('amount', 0)} {node.get('transaction_type', '')}"
+            node_type = "Transaction"
+        else:
+            label = node_id[:12]
+            node_type = "Other"
+
+        path.append(
+            PathNode(id=node_id, label=label, properties={"type": node_type, **node})
+        )
+
+    edge_records = await execute_query(
+        f"""
+        MATCH (a:User {{id: $src}}), (b:User {{id: $tgt}})
+        MATCH p = shortestPath((a)-[*..{max_depth}]-(b))
+        WITH relationships(p) AS rels, nodes(p) AS ns
+        UNWIND range(0, size(rels)-1) AS i
+        RETURN
+            coalesce(ns[i].id) AS source,
+            coalesce(ns[i+1].id) AS target,
+            type(rels[i]) AS rel_type
+        """,
+        {"src": source_id, "tgt": target_id},
+    )
+
+    edges = [
+        PathEdge(source=r["source"], target=r["target"], type=r["rel_type"])
+        for r in edge_records
+    ]
+
+    return ShortestPathResponse(path=path, edges=edges, length=len(edges))

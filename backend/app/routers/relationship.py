@@ -1,6 +1,10 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
-from app.models.relationship import TransactionConnections, UserConnections
+from app.models.relationship import (
+    ShortestPathResponse,
+    TransactionConnections,
+    UserConnections,
+)
 from app.services import relationship as relationship_service
 
 router = APIRouter(
@@ -18,5 +22,17 @@ async def get_user_relationships(user_id: str):
 async def get_transaction_relationships(tx_id: str):
     try:
         return await relationship_service.get_transaction_connections(tx_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get("/shortest-path", response_model=ShortestPathResponse)
+async def shortest_path(
+    source: str = Query(...),
+    target: str = Query(...),
+    max_depth: int = Query(10, ge=1, le=20),
+):
+    try:
+        return await relationship_service.find_shortest_path(source, target, max_depth)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
