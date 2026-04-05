@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, CreditCard, Search } from 'lucide-react'
+import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, CreditCard, Search, Plus } from 'lucide-react'
 import { fetchTransactions } from '@/api/transactions'
 import type { TransactionStatus, TransactionType, TransactionFilters } from '@/api/transactions'
+import TransactionFormDialog from '@/components/TransactionFormDialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -68,6 +69,7 @@ export default function TransactionsPage() {
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined)
   const [filters, setFilters] = useState<TransactionFilters>({})
   const [searchInput, setSearchInput] = useState('')
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const navigate = useNavigate()
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -116,14 +118,21 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
-        <p className="text-sm text-muted-foreground">
-          Browse and filter transactions
-          {activeFilterCount > 0 &&
-            ` (${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} active)`}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
+          <p className="text-sm text-muted-foreground">
+            Browse and filter transactions
+            {activeFilterCount > 0 &&
+              ` (${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} active)`}
+          </p>
+        </div>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="mr-1 h-4 w-4" /> Add Transaction
+        </Button>
       </div>
+
+      <TransactionFormDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
 
       {/* Search + Filters */}
       <div className="flex flex-wrap gap-3">
