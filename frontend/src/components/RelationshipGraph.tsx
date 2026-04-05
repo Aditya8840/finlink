@@ -2,9 +2,11 @@ import { useEffect, useRef, useCallback } from 'react'
 import cytoscape from 'cytoscape'
 import type { Core } from 'cytoscape'
 import { useNavigate } from 'react-router-dom'
+import { Download } from 'lucide-react'
 import type { UserConnections } from '@/api/relationships'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 const EDGE_COLORS: Record<string, string> = {
   SHARED_EMAIL: '#f59e0b',
@@ -265,6 +267,21 @@ export default function RelationshipGraph({ userId, userName, connections }: Pro
     }
   }, [buildElements, navigate, userId])
 
+  const exportJSON = useCallback(() => {
+    const data = {
+      user: { id: userId, name: userName },
+      connections,
+      exported_at: new Date().toISOString(),
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `user-relationships-${userId.slice(0, 8)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [connections, userId, userName])
+
   const hasData =
     connections.shared_links.length > 0 ||
     connections.credit_links.length > 0 ||
@@ -276,7 +293,12 @@ export default function RelationshipGraph({ userId, userName, connections }: Pro
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Relationship Graph</span>
+          <div className="flex items-center gap-3">
+            <span>Relationship Graph</span>
+            <Button variant="ghost" size="sm" onClick={exportJSON}>
+              <Download className="mr-1 h-4 w-4" /> Export JSON
+            </Button>
+          </div>
           <div className="flex gap-2 flex-wrap">
             {LEGEND_ITEMS.map((item) => (
               <Badge

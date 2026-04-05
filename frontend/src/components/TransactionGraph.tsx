@@ -2,10 +2,12 @@ import { useEffect, useRef, useCallback } from 'react'
 import cytoscape from 'cytoscape'
 import type { Core } from 'cytoscape'
 import { useNavigate } from 'react-router-dom'
+import { Download } from 'lucide-react'
 import type { TransactionConnections } from '@/api/relationships'
 import type { Transaction } from '@/api/transactions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 const EDGE_COLORS: Record<string, string> = {
   SENT: '#3b82f6',
@@ -365,11 +367,38 @@ export default function TransactionGraph({ transaction, connections }: Props) {
     }
   }, [buildElements, navigate, transaction.id])
 
+  const exportJSON = useCallback(() => {
+    const data = {
+      transaction: {
+        id: transaction.id,
+        type: transaction.transaction_type,
+        amount: transaction.amount,
+        currency: transaction.currency,
+      },
+      sender: connections.sender,
+      receiver: connections.receiver,
+      linked_transactions: connections.linked_transactions,
+      exported_at: new Date().toISOString(),
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `transaction-connections-${transaction.id.slice(0, 8)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [transaction, connections])
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Transaction Graph</span>
+          <div className="flex items-center gap-3">
+            <span>Transaction Graph</span>
+            <Button variant="ghost" size="sm" onClick={exportJSON}>
+              <Download className="mr-1 h-4 w-4" /> Export JSON
+            </Button>
+          </div>
           <div className="flex gap-2 flex-wrap">
             {LEGEND_ITEMS.map((item) => (
               <Badge
