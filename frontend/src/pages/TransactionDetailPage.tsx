@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -11,12 +12,14 @@ import {
   Smartphone,
   Calendar,
   DollarSign,
+  Pencil,
 } from 'lucide-react'
 import { fetchTransaction } from '@/api/transactions'
 import type { TransactionType, TransactionStatus } from '@/api/transactions'
 import { fetchUser } from '@/api/users'
 import { fetchTransactionConnections } from '@/api/relationships'
 import TransactionGraph from '@/components/TransactionGraph'
+import TransactionFormDialog from '@/components/TransactionFormDialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -62,6 +65,7 @@ function formatDate(dateStr: string) {
 export default function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   const { data: transaction, isLoading: txLoading } = useQuery({
     queryKey: ['transaction', id],
@@ -114,23 +118,34 @@ export default function TransactionDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/transactions')}>
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back
-        </Button>
-        <div>
-          <div className="flex items-center gap-2">
-            <TypeIcon className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-2xl font-bold tracking-tight">
-              {typeConfig[transaction.transaction_type].label}
-            </h1>
-            <Badge variant={statusVariant[transaction.status]} className="ml-2">
-              {transaction.status}
-            </Badge>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/transactions')}>
+            <ArrowLeft className="mr-1 h-4 w-4" /> Back
+          </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <TypeIcon className="h-5 w-5 text-muted-foreground" />
+              <h1 className="text-2xl font-bold tracking-tight">
+                {typeConfig[transaction.transaction_type].label}
+              </h1>
+              <Badge variant={statusVariant[transaction.status]} className="ml-2">
+                {transaction.status}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground font-mono">{transaction.id}</p>
           </div>
-          <p className="text-xs text-muted-foreground font-mono">{transaction.id}</p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+          <Pencil className="mr-1 h-4 w-4" /> Edit
+        </Button>
       </div>
+
+      <TransactionFormDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        transaction={transaction}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

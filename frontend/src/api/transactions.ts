@@ -75,3 +75,48 @@ export async function fetchTransaction(id: string): Promise<Transaction> {
   const { data } = await api.get(`/transactions/${id}`)
   return data
 }
+
+export interface CreateTransactionPayload {
+  transaction_type: TransactionType
+  status?: TransactionStatus
+  sender_id: string
+  receiver_id: string
+  amount: number
+  currency?: string
+  destination_amount?: number
+  destination_currency?: string
+  description?: string
+  device_info?: {
+    device_id?: string
+    ip_address?: string
+    geolocation?: { country?: string; state?: string }
+  }
+  payment_method?: { id: string; type: string }
+}
+
+export interface UpdateTransactionPayload {
+  transaction_type?: TransactionType
+  status?: TransactionStatus
+  amount?: number
+  currency?: string
+  description?: string
+  device_info?: {
+    device_id?: string
+    ip_address?: string
+    geolocation?: { country?: string; state?: string }
+  } | null
+  payment_method?: { id: string; type: string } | null
+}
+
+export async function createTransaction(payload: CreateTransactionPayload): Promise<Transaction> {
+  const { data } = await api.post('/transactions/', payload)
+  return data
+}
+
+export async function updateTransaction(
+  id: string,
+  payload: UpdateTransactionPayload,
+): Promise<Transaction> {
+  const { data } = await api.put(`/transactions/${id}`, payload)
+  return data
+}
