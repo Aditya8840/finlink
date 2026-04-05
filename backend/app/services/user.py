@@ -145,7 +145,6 @@ async def update_user(user_id: str, data: UserUpdate) -> UserResponse | None:
             "MATCH (u:User {id: $id})-[r:HAS_ADDRESS]->(a:Address) DELETE r, a",
             {"id": user_id},
         )
-        await _create_related_entities(user_id, data)
 
     if data.payment_methods is not None:
         await execute_write(
@@ -155,6 +154,8 @@ async def update_user(user_id: str, data: UserUpdate) -> UserResponse | None:
             """,
             {"id": user_id},
         )
+
+    if data.address is not None or data.payment_methods is not None:
         await _create_related_entities(user_id, data)
 
     await execute_write(

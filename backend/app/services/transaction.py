@@ -189,7 +189,6 @@ async def update_transaction(
             """,
             {"id": tx_id},
         )
-        await _create_related_entities(tx_id, data)
 
     if data.payment_method is not None:
         await execute_write(
@@ -199,6 +198,8 @@ async def update_transaction(
             """,
             {"id": tx_id},
         )
+
+    if data.device_info is not None or data.payment_method is not None:
         await _create_related_entities(tx_id, data)
 
     await execute_write(
