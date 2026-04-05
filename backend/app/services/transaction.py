@@ -201,6 +201,16 @@ async def update_transaction(
         )
         await _create_related_entities(tx_id, data)
 
+    await execute_write(
+        """
+        MATCH (t:Transaction {id: $id})-[r:SHARED_IP
+            |SHARED_DEVICE
+            |SHARED_PAYMENT]-()
+        DELETE r
+        """,
+        {"id": tx_id},
+    )
+
     return await get_transaction(tx_id)
 
 
