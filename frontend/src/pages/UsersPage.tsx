@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, AlertTriangle } from 'lucide-react'
 import { fetchUsers } from '@/api/users'
 import UserFormDialog from '@/components/UserFormDialog'
 import { Button } from '@/components/ui/button'
@@ -26,6 +26,7 @@ export default function UsersPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [flaggedOnly, setFlaggedOnly] = useState(false)
   const navigate = useNavigate()
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -37,9 +38,16 @@ export default function UsersPage() {
     searchTimerRef.current = setTimeout(() => setDebouncedSearch(value), 300)
   }
 
+  const toggleFlagged = () => {
+    setFlaggedOnly((prev) => !prev)
+    setCursorStack([])
+    setCurrentCursor(undefined)
+  }
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['users', currentCursor, debouncedSearch],
-    queryFn: () => fetchUsers(currentCursor, PAGE_SIZE, debouncedSearch || undefined),
+    queryKey: ['users', currentCursor, debouncedSearch, flaggedOnly],
+    queryFn: () =>
+      fetchUsers(currentCursor, PAGE_SIZE, debouncedSearch || undefined, flaggedOnly || undefined),
   })
 
   const goNext = () => {
@@ -72,15 +80,20 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name or email..."
-          value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="pl-9"
-        />
+      <div className="flex gap-3 items-center">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button variant={flaggedOnly ? 'default' : 'outline'} size="sm" onClick={toggleFlagged}>
+          <AlertTriangle className="mr-1 h-4 w-4" />
+          {flaggedOnly ? 'Showing Flagged Only' : 'Show Flagged Users'}
+        </Button>
       </div>
 
       <UserFormDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
