@@ -13,6 +13,7 @@ import {
 import { fetchUser } from '@/api/users'
 import { fetchUserConnections } from '@/api/relationships'
 import type { TransactionLink, SharedLink } from '@/api/relationships'
+import RelationshipGraph from '@/components/RelationshipGraph'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -121,6 +122,14 @@ export default function UserDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {connections && (
+        <RelationshipGraph
+          userId={user.id}
+          userName={`${user.first_name} ${user.last_name}`}
+          connections={connections}
+        />
+      )}
 
       {connectionsLoading ? (
         <Skeleton className="h-48 w-full" />
